@@ -7,6 +7,7 @@ defmodule JQ.MixProject do
       version: "0.1.0",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
+      elixirc_options: elixirc_options(),
       compilers: [:elixir_make] ++ Mix.compilers(),
       make_targets: ["nifs"],
       make_clean: ["clean"],
@@ -14,7 +15,13 @@ defmodule JQ.MixProject do
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
+  def elixirc_options do
+    case Mix.env() do
+      :test -> [warnings_as_errors: true]
+      _ -> []
+    end
+  end
+
   def application do
     [
       extra_applications: [:logger]

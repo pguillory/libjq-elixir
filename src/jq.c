@@ -6,6 +6,41 @@
 
 #include <jq.h>
 
+struct jq_resource {
+  jq_state * jq;
+};
+
+ErlNifResourceType * jq_resource_type;
+
+void free_jq_resource(ErlNifEnv * env, void * obj) {
+  struct jq_resource * jq_resource = (struct jq_resource *) obj;
+  free(jq_resource->jq);
+  jq_resource->jq = NULL;
+}
+
+int open_jq_resource_type(ErlNifEnv * env) {
+  ErlNifResourceFlags tried;
+  jq_resource_type = enif_open_resource_type(env, NULL, "jq", free_jq_resource, ERL_NIF_RT_CREATE, &tried);
+  return jq_resource_type != NULL;
+}
+
+ERL_NIF_TERM make_jq_resource(ErlNifEnv * env, jq_state * jq) {
+  struct jq_resource * jq_resource = enif_alloc_resource(jq_resource_type, sizeof(struct jq_resource));
+  jq_resource->jq = jq;
+  return enif_make_resource(env, jq_resource);
+}
+
+int get_jq_resource(ErlNifEnv * env, ERL_NIF_TERM arg, jq_state ** jq) {
+  struct jq_resource * jq_resource;
+
+  if (!enif_get_resource(env, arg, jq_resource_type, (void **) &jq_resource)) {
+    return 0;
+  }
+  *jq = jq_resource->jq;
+  return 1;
+}
+
+
 ERL_NIF_TERM ok_atom;
 ERL_NIF_TERM error_atom;
 ERL_NIF_TERM nil_atom;
@@ -144,9 +179,10 @@ int jv_to_term(ErlNifEnv * env, jv value, ERL_NIF_TERM * term) {
   case JV_KIND_ARRAY:
     length = jv_array_length(jv_copy(value));
     *term = enif_make_list(env, 0);
-    for (int i = length - 1; i >= 0; i++) {
+    for (int i = length - 1; i >= 0; i--) {
+      jv element_jv = jv_array_get(jv_copy(value), i);
       ERL_NIF_TERM element;
-      if (!jv_to_term(env, jv_array_get(jv_copy(value), i), &element)) {
+      if (!jv_to_term(env, element_jv, &element)) {
         return 0;
       }
       *term = enif_make_list_cell(env, element, *term);
@@ -173,7 +209,7 @@ int jv_to_term(ErlNifEnv * env, jv value, ERL_NIF_TERM * term) {
   }
 }
 
-static ERL_NIF_TERM dump_string_nif(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[]) {
+static ERL_NIF_TERM encode_nif(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[]) {
   jv value;
 
   if (argc != 1 ||
@@ -191,12 +227,89 @@ static ERL_NIF_TERM dump_string_nif(ErlNifEnv * env, int argc, const ERL_NIF_TER
   return result_term;
 }
 
+static ERL_NIF_TERM decode_nif(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[]) {
+  ErlNifBinary string;
+
+  if (argc != 1 ||
+      !enif_inspect_binary(env, argv[0], &string)) {
+    return enif_make_badarg(env);
+  }
+
+  jv result = jv_parse_sized((char *) string.data, string.size);
+
+  ERL_NIF_TERM result_term;
+  if (!jv_to_term(env, result, &result_term)) {
+    return enif_make_badarg(env);
+  }
+  return result_term;
+}
+
+static ERL_NIF_TERM compile_nif(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[]) {
+  ErlNifBinary program_string;
+
+  if (argc != 1 ||
+      !enif_inspect_binary(env, argv[0], &program_string)) {
+    return enif_make_badarg(env);
+  }
+
+  char * program = malloc(program_string.size + 1);
+  memcpy(program, program_string.data, program_string.size);
+  program[program_string.size] = 0;
+
+  jq_state * jq = jq_init();
+
+  if (!jq_compile(jq, program)) {
+    free(program);
+    return enif_make_badarg(env);
+  }
+
+  free(program);
+  return make_jq_resource(env, jq);
+}
+
+static ERL_NIF_TERM run_nif(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[]) {
+  jq_state * jq;
+  ErlNifBinary input_string;
+
+  if (argc != 2 ||
+      !get_jq_resource(env, argv[0], &jq) ||
+      !enif_inspect_binary(env, argv[1], &input_string)) {
+    return enif_make_badarg(env);
+  }
+
+  jv input = jv_parse_sized((char *) input_string.data, input_string.size);
+
+  if (!jv_is_valid(input)) {
+    return enif_make_badarg(env);
+  }
+
+  int flags = 0;
+  jq_start(jq, input, flags);
+
+  ERL_NIF_TERM result_list = enif_make_list(env, 0);
+  jv value;
+
+  while (jv_is_valid(value = jq_next(jq))) {
+    ERL_NIF_TERM value_term;
+    if (!jv_to_term(env, value, &value_term)) {
+      return enif_make_badarg(env);
+    }
+    result_list = enif_make_list_cell(env, value_term, result_list);
+  }
+
+  return result_list;
+}
+
 static ErlNifFunc nif_funcs[] = {
-  {"dump_string", 1, dump_string_nif},
+  {"encode!", 1, encode_nif},
+  {"decode!", 1, decode_nif},
+  {"compile", 1, compile_nif},
+  {"run", 2, run_nif},
 };
 
 int load(ErlNifEnv * env, void ** priv_data, ERL_NIF_TERM load_info) {
   init_atoms(env);
+  assert(open_jq_resource_type(env));
   return 0;
 }
 
