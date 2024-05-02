@@ -3,6 +3,7 @@ defmodule Libjq.MixProject do
 
   def project do
     [
+      package: package(),
       app: :libjq,
       version: "0.1.0",
       elixir: "~> 1.16",
@@ -12,6 +13,17 @@ defmodule Libjq.MixProject do
       make_targets: ["nifs"],
       make_clean: ["clean"],
       deps: deps()
+    ]
+  end
+
+  defp package do
+    [
+      description: "Elixir bindings for libjq, the library form of the command-line tool jq",
+      licenses: ["MIT"],
+      maintainers: ["pguillory@gmail.com"],
+      links: %{
+        "GitHub" => "https://github.com/pguillory/libjq-elixir"
+      }
     ]
   end
 
