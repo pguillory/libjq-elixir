@@ -1,11 +1,17 @@
 # Libjq
 
-**TODO: Add description**
+Elixir bindings for libjq, the library form of jq the command-line tool.
+
+## Example
+
+```elixir
+iex> program = Libjq.compile(".x")
+iex> json = ~S[ {"x": 12345} ]
+iex> Libjq.run(program, json)
+[12345]
+```
 
 ## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `libjq` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -14,8 +20,3 @@ def deps do
   ]
 end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/libjq>.
-
