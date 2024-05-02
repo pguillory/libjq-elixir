@@ -33,5 +33,6 @@ defmodule JQ.NIFTest do
 
   test "compile + run" do
     assert compile(".a") |> run("{\"a\":1}") == [1]
+    assert compile(".[]") |> run("[1, 2]") == [1, 2]
   end
 end

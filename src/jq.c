@@ -297,6 +297,7 @@ static ERL_NIF_TERM run_nif(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[]
     result_list = enif_make_list_cell(env, value_term, result_list);
   }
 
+  assert(enif_make_reverse_list(env, result_list, &result_list));
   return result_list;
 }
 
