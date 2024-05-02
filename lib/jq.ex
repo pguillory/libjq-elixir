@@ -1,0 +1,2 @@
+defmodule JQ do
+end
