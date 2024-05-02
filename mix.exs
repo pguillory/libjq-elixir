@@ -1,4 +1,4 @@
-defmodule JQ.MixProject do
+defmodule Libjq.MixProject do
   use Mix.Project
 
   def project do

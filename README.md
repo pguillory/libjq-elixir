@@ -1,4 +1,4 @@
-# JQ
+# Libjq
 
 **TODO: Add description**
 

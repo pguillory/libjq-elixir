@@ -1,10 +1,10 @@
-defmodule JQ.NIF do
+defmodule Libjq.NIF do
   @on_load :init
 
   @doc false
   def init do
     priv_dir = :code.priv_dir(:libjq)
-    nif_path = Path.join(priv_dir, "jq")
+    nif_path = Path.join(priv_dir, "libjq")
     :ok = :erlang.load_nif(nif_path, 0)
   end
 

@@ -1,5 +1,5 @@
-defmodule JQ.NIFTest do
-  import JQ.NIF
+defmodule Libjq.NIFTest do
+  import Libjq.NIF
   use ExUnit.Case
 
   test "encode!" do

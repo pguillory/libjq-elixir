@@ -12,16 +12,16 @@ else ifeq ($(UNAME_SYS), Linux)
 	CFLAGS += -shared
 endif
 
-nifs: priv/jq.so
+nifs: priv/libjq.so
 
 priv:
 	mkdir -p priv
 
-priv/jq.so: priv src/jq.c
-	gcc -o priv/jq.so src/jq.c $(CFLAGS) -ljq
+priv/libjq.so: priv src/libjq.c
+	gcc -o priv/libjq.so src/libjq.c $(CFLAGS) -ljq
 
 clean:
-	rm -f priv/jq.so
+	rm -f priv/libjq.so
 
 publish: clean
 	mix hex.publish --yes

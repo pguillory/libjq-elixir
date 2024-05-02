@@ -1,2 +1,0 @@
-defmodule JQ do
-end
