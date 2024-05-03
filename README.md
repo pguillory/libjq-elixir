@@ -13,6 +13,20 @@ iex> Libjq.run(program, json)
 
 ## Installation
 
+The system needs to have libjq installed. On OS/X, it comes with jq:
+
+```bash
+brew install jq
+```
+
+On Linux, use the libjq-dev package:
+
+```bash
+apt install libjq-dev
+```
+
+Finally, add this to your project's `mix.exs`:
+
 ```elixir
 def deps do
   [
