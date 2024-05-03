@@ -1,6 +1,9 @@
 # Libjq
 
-Elixir bindings for libjq, the library form of jq the command-line tool.
+Elixir bindings for libjq, library form of the popular command-line JSON
+processing tool [jq].
+
+[jq]: https://github.com/jqlang/jq
 
 ## Example
 
